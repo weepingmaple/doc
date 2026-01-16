@@ -1,0 +1,78 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Management account - IAM User allowed to assume MemberAccountRole in any account.
+
+Parameters:
+  AuditUserName:
+    Type: String
+    Default: iamsyspvaptapp
+    MinLength: 1
+    MaxLength: 64
+  
+  AuditGroupName:
+    Type: String
+    Description: Name of the IAM Group to create.
+    Default: VAPTAuditGroup
+    MinLength: 1
+    MaxLength: 128
+
+  MemberRoleName:
+    Type: String
+    Default: MemberAccountVAPTViewRole
+    MinLength: 1
+    MaxLength: 64
+
+  CRQ:
+    Type: String 
+    Description: Change Request/Approval Reference for auditing purposes.
+    AllowedPattern: "^CRQ[0-9]{12}"
+    ConstraintDescription: Must be in format CRQ followed by 12 digits
+    
+Resources:
+  # Create the IAM Group
+  AuditGroup:
+    Type: AWS::IAM::Group
+    Properties:
+      GroupName: !Ref AuditGroupName
+      Path: /
+  
+  # Attach the Policy to the Group
+  # Allows members of this group to assume the specific role in any account
+  AuditGroupAssumeRolePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub "${AuditGroupName}-Assume-${MemberRoleName}"
+      Groups:
+        - !Ref AuditGroup
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: AssumeMemberRole
+            Effect: Allow
+            Action: "sts:AssumeRole"
+            # Resource: explicitly construct the ARN pattern for the role in any account
+            Resource: !Sub "arn:${AWS::Partition}:iam::*:role/${MemberRoleName}"
+
+  # Create IAM User
+  AuditUser:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: !Ref AuditUserName
+      Path: /
+      Groups:
+        - !Ref AuditGroup
+      Tags:
+        - Key: ManagedBy
+          Value: CloudFormation
+        - Key: Purpose
+          Value: Allows assuming VAPT role in member accounts
+        - Key: Remarks
+          Value: !Ref CRQ
+            
+Outputs:
+  ManagementUserArn:
+    Description: ARN of the created Audit User.
+    Value: !GetAtt AuditUser.Arn
+
+  ManagementGroupName:
+    Description: Name of the created Audit Group.
+    Value: !Ref AuditGroup

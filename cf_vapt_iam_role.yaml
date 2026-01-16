@@ -1,0 +1,58 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: StackSet (target accounts) Member role assumable by a management-account IAM User.
+
+Parameters:
+  ManagementAccountId:
+    Type: String
+    Description: 12-digit AWS Organizations management account ID.
+    AllowedPattern: "^[0-9]{12}$"
+
+  AuditUserName:
+    Type: String
+    Description: IAM User name in the management account that can assume this role.
+    Default: iamsyspvaptapp
+    MinLength: 1
+    MaxLength: 64
+
+  MemberRoleName:
+    Type: String
+    Description: Role name to create in each member account.
+    Default: MemberAccountVAPTViewRole
+    MinLength: 1
+    MaxLength: 64
+
+  CRQ:
+    Type: String 
+    Description: Change Request/Approval Reference for auditing purposes.
+    AllowedPattern: "^CRQ[0-9]{12}"
+    ConstraintDescription: Must be in format CRQ followed by 12 digits
+
+Resources:
+  MemberAccountRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref MemberRoleName
+      Path: /
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: TrustManagementAccountUser
+            Effect: Allow
+            Principal:
+              AWS: !Sub "arn:${AWS::Partition}:iam::${ManagementAccountId}:user/${AuditUserName}"
+            Action: "sts:AssumeRole"
+      ManagedPolicyArns:
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/SecurityAudit"
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/job-function/ViewOnlyAccess"
+      Tags:
+        - Key: ManagedBy
+          Value: CloudFormation
+        - Key: Purpose
+          Value: Allows management account VAPT user to assume this role
+        - Key: Remarks
+          Value: !Ref CRQ
+
+Outputs:
+  MemberRoleArn:
+    Description: ARN of the role created in this target account.
+    Value: !GetAtt MemberAccountRole.Arn
