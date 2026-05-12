@@ -1,0 +1,268 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: AWS Classic Load Balancer Timeout Remediation
+
+Parameters:
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Default: vpc-0ddf0f38b62e72af6
+    Description: VPC ID for the Load Balancer and Endpoints
+  SubnetId1a:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-0d0bf6e19fd430c06
+    Description: First Subnet ID
+  SubnetId1b:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-048f710b0af5cbd6d
+    Description: Second Subnet ID
+  LoadBalancerName:
+    Type: String
+    Default: clb-bento-np-osd
+    Description: Name of the Classic Load Balancer
+  AlertEmailAddress:
+    Type: String
+    Default: andrewluo-vendor@gic.com.sg
+    Description: Email address for SNS alerts
+
+Resources:
+  # ---------------------------------------------------------
+  # Security Groups for Lambda and Endpoints
+  # ---------------------------------------------------------
+  LambdaSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: clb-remediation-lambda-sg
+      GroupDescription: Security group for the remediation Lambda
+      VpcId: !Ref VpcId
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+
+  VpcEndpointSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: elb-vpc-endpoint-sg
+      GroupDescription: Allow inbound HTTPS traffic from the Lambda function
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          SourceSecurityGroupId: !GetAtt LambdaSecurityGroup.GroupId
+
+  # ---------------------------------------------------------
+  # VPC Endpoints
+  # ---------------------------------------------------------
+  ElbApiEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref VpcId
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.elasticloadbalancing
+      VpcEndpointType: Interface
+      SubnetIds:
+        - !Ref SubnetId1a
+        - !Ref SubnetId1b
+      SecurityGroupIds:
+        - !GetAtt VpcEndpointSecurityGroup.GroupId
+      PrivateDnsEnabled: true
+
+  SnsEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref VpcId
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.sns
+      VpcEndpointType: Interface
+      SubnetIds:
+        - !Ref SubnetId1a
+        - !Ref SubnetId1b
+      SecurityGroupIds:
+        - !GetAtt VpcEndpointSecurityGroup.GroupId
+      PrivateDnsEnabled: true
+
+  # ---------------------------------------------------------
+  # SNS Topic and Subscription
+  # ---------------------------------------------------------
+  SnsAlertTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: clb-timeout-alerts
+
+  SnsAlertSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref SnsAlertTopic
+      Protocol: email
+      Endpoint: !Ref AlertEmailAddress
+
+  # ---------------------------------------------------------
+  # IAM Roles & Policies for Lambda
+  # ---------------------------------------------------------
+  LambdaRemediationRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: clb-timeout-remediation-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+      Policies:
+        - PolicyName: clb-timeout-remediation-policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: arn:aws:logs:*:*:*
+              - Effect: Allow
+                Action: elasticloadbalancing:ModifyLoadBalancerAttributes
+                Resource: !Sub arn:aws:elasticloadbalancing:${AWS::Region}:${AWS::AccountId}:loadbalancer/${LoadBalancerName}
+              - Effect: Allow
+                Action: sns:Publish
+                Resource: !Ref SnsAlertTopic
+
+  # ---------------------------------------------------------
+  # Lambda Function
+  # ---------------------------------------------------------
+    # ---------------------------------------------------------
+  # Lambda Function (Inline Code)
+  # ---------------------------------------------------------
+  RemediationLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: clb-timeout-enforcer
+      Handler: index.lambda_handler
+      Role: !GetAtt LambdaRemediationRole.Arn
+      Runtime: python3.13
+      Timeout: 10
+      VpcConfig:
+        SubnetIds:
+          - !Ref SubnetId1a
+          - !Ref SubnetId1b
+        SecurityGroupIds:
+          - !GetAtt LambdaSecurityGroup.GroupId
+      Environment:
+        Variables:
+          SNS_TOPIC_ARN: !Ref SnsAlertTopic
+      Code:
+        ZipFile: |
+          import boto3
+          import json
+          import logging
+          import os
+
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+
+          # Initialize Boto3 clients. Because private_dns_enabled = True on the
+          # VPC endpoints, boto3 automatically routes these through the private network.
+          elb = boto3.client('elb')
+          sns = boto3.client('sns')
+
+          # Load the SNS Topic ARN from CloudFormation-provided environment variables
+          SNS_TOPIC_ARN = os.environ.get('SNS_TOPIC_ARN')
+
+          def lambda_handler(event, context):
+              logger.info(f"Received event: {json.dumps(event)}")
+              
+              try:
+                  detail = event['detail']
+                  request_parameters = detail['requestParameters']
+                  load_balancer_name = request_parameters['loadBalancerName']
+                  new_timeout = int(request_parameters['loadBalancerAttributes']['connectionSettings']['idleTimeout'])
+              except KeyError as e:
+                  logger.error(f"Missing expected key in event payload: {e}")
+                  return
+
+              # Failsafe check
+              if new_timeout < 1800:
+                  logger.info(f"Non-compliant timeout ({new_timeout}s) detected on {load_balancer_name}. Enforcing 1800s.")
+                  try:
+                      elb.modify_load_balancer_attributes(
+                          LoadBalancerName=load_balancer_name,
+                          LoadBalancerAttributes={
+                              'ConnectionSettings': {
+                                  'IdleTimeout': 1800
+                              }
+                          }
+                      )
+                      
+                      # Publish alert to SNS
+                      message = (
+                          f"AWS Classic Load Balancer Timeout Remediation\n\n"
+                          f"Load Balancer: {load_balancer_name}\n"
+                          f"Attempted Timeout: {new_timeout} seconds\n"
+                          f"Action Taken: Automatically reverted to 1800 seconds.\n"
+                          f"Event Details: {json.dumps(detail)}"
+                      )
+                                
+                      if SNS_TOPIC_ARN:
+                          sns.publish(
+                              TopicArn=SNS_TOPIC_ARN,
+                              Subject="[Alert] ELB Timeout Remediated",
+                              Message=message
+                          )
+                          logger.info("Successfully published remediation alert to SNS.")
+                      else:
+                          logger.warning("SNS_TOPIC_ARN environment variable is not set. Skipping alert.")
+                          
+                      logger.info("Successfully remediated the load balancer timeout to 1800s.")
+                  except Exception as e:
+                      logger.error(f"Failed to modify load balancer or send SNS alert: {str(e)}")
+                      raise e
+              else:
+                  logger.info(f"Timeout {new_timeout}s on {load_balancer_name} is compliant (>= 1800s). No action taken.")
+
+  # ---------------------------------------------------------
+  # EventBridge Rule & Targets
+  # ---------------------------------------------------------
+  ClbTimeoutRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: capture-clb-timeout-modifications
+      Description: Capture idle timeout changes < 1800s for Classic Load Balancers
+      EventPattern:
+        source:
+          - aws.elasticloadbalancing
+        detail-type:
+          - AWS API Call via CloudTrail
+        detail:
+          eventSource:
+            - elasticloadbalancing.amazonaws.com
+          eventName:
+            - ModifyLoadBalancerAttributes
+          userIdentity:
+            sessionContext:
+              sessionIssuer:
+                userName:
+                  - anything-but:
+                      - clb-timeout-remediation-role
+          requestParameters:
+            loadBalancerAttributes:
+              connectionSettings:
+                idleTimeout:
+                  - numeric:
+                      - '<'
+                      - 1800
+      State: ENABLED
+      Targets:
+        - Arn: !Ref SnsAlertTopic
+          Id: SendToSNS
+        - Arn: !GetAtt RemediationLambdaFunction.Arn
+          Id: TriggerRemediationLambda
+
+  LambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref RemediationLambdaFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt ClbTimeoutRule.Arn
