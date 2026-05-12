@@ -17,11 +17,20 @@ Parameters:
   LoadBalancerName:
     Type: String
     Default: clb-bento-np-osd
-    Description: Name of the Classic Load Balancer
+    Description: Name of the Classic Load Balancer 1
+  LoadBalancerName2:
+    Type: String
+    Default: ""
+    Description: Name of the Classic Load Balancer 2
   AlertEmailAddress:
     Type: String
     Default: andrewluo-vendor@gic.com.sg
     Description: Email address for SNS alerts
+Conditions:
+  HasSecondLoadBalancer: !Not
+  - !Equals
+    - !Ref LoadBalancerName2
+    - ""
 
 Resources:
   # ---------------------------------------------------------
@@ -87,6 +96,7 @@ Resources:
     Type: AWS::SNS::Topic
     Properties:
       TopicName: clb-timeout-alerts
+      KmsMasterKeyId: alias/aws/sns
 
   SnsAlertSubscription:
     Type: AWS::SNS::Subscription
@@ -121,18 +131,19 @@ Resources:
                   - logs:CreateLogGroup
                   - logs:CreateLogStream
                   - logs:PutLogEvents
-                Resource: arn:aws:logs:*:*:*
+                Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/clb-timeout-enforcer:*
               - Effect: Allow
                 Action: elasticloadbalancing:ModifyLoadBalancerAttributes
-                Resource: !Sub arn:aws:elasticloadbalancing:${AWS::Region}:${AWS::AccountId}:loadbalancer/${LoadBalancerName}
+                Resource: !If
+                  - HasSecondLoadBalancer
+                  - - !Sub arn:aws:elasticloadbalancing:${AWS::Region}:${AWS::AccountId}:loadbalancer/${LoadBalancerName}
+                    - !Sub arn:aws:elasticloadbalancing:${AWS::Region}:${AWS::AccountId}:loadbalancer/${LoadBalancerName2}
+                  - !Sub arn:aws:elasticloadbalancing:${AWS::Region}:${AWS::AccountId}:loadbalancer/${LoadBalancerName}
               - Effect: Allow
                 Action: sns:Publish
                 Resource: !Ref SnsAlertTopic
 
   # ---------------------------------------------------------
-  # Lambda Function
-  # ---------------------------------------------------------
-    # ---------------------------------------------------------
   # Lambda Function (Inline Code)
   # ---------------------------------------------------------
   RemediationLambdaFunction:
@@ -207,7 +218,7 @@ Resources:
                       if SNS_TOPIC_ARN:
                           sns.publish(
                               TopicArn=SNS_TOPIC_ARN,
-                              Subject="[Alert] ELB Timeout Remediated",
+                              Subject="[Alert] CLB Timeout Remediated",
                               Message=message
                           )
                           logger.info("Successfully published remediation alert to SNS.")
@@ -243,8 +254,7 @@ Resources:
             sessionContext:
               sessionIssuer:
                 userName:
-                  - anything-but:
-                      - clb-timeout-remediation-role
+                  - anything-but: clb-timeout-remediation-role
           requestParameters:
             loadBalancerAttributes:
               connectionSettings:
@@ -254,8 +264,6 @@ Resources:
                       - 1800
       State: ENABLED
       Targets:
-        - Arn: !Ref SnsAlertTopic
-          Id: SendToSNS
         - Arn: !GetAtt RemediationLambdaFunction.Arn
           Id: TriggerRemediationLambda
 
@@ -266,3 +274,16 @@ Resources:
       Action: lambda:InvokeFunction
       Principal: events.amazonaws.com
       SourceArn: !GetAtt ClbTimeoutRule.Arn
+
+Outputs:
+  LambdaFunctionArn:
+    Description: ARN of the timeout enforcer Lambda
+    Value: !GetAtt RemediationLambdaFunction.Arn
+  
+  SnsTopicArn:
+    Description: ARN of SNS alert topic
+    Value: !GetAtt SnsAlertTopic.TopicArn
+  
+  EventBridgeArn:
+    Description: ARN of EventBridge rule
+    Value: !GetAtt ClbTimeoutRule.Arn
