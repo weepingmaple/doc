@@ -7,7 +7,7 @@ resource "aws_sns_topic" "clb_alerts" {
 resource "aws_sns_topic_subscription" "email_alert" {
   topic_arn = aws_sns_topic.clb_alerts.arn
   protocol  = "email"
-  endpoint  = "andrewluo-vendor@gic.com.sg" # Replace with your actual email address
+  endpoint  = "" # Replace with your actual email address
 }
 
 # 3. Allow the Lambda Function to Publish to the SNS Topic
