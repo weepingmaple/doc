@@ -1,0 +1,265 @@
+S/N,ISRA Control Requirement for Cloud Services/Application,"Policy/Regulation/
+Advisory Ref.","Fully Complied? 
+(Y/N/NA)","Control enabled?
+(Y/N/NA)","Provide detail of how the control requirement is met 
+
+If the control is supported, but not enabled - please provide reason.
+",Virtual WAN,Azure Virutal Network,Network Security Group,Route Table,Private Endpint,Private DNS Zone,Azure Firewall,Azure Firewall Manager,Azure Bastion,Azure Front Door + WAF,Storage Account,Azure Funcions,Virtual Machine,Azure Communication Services,Event Grid,Service Bus,Entra ID,Managed Identity,Key Vault,Defender for Cloud,Azure Policy,Azure Monitor,Azure Portal,Cost Management,Event Hub,Microsoft Sentinel,Microsoft Purview,Management Group,Subscription,Log Analytics Workspace,Resource Group,DNS resolver,DDos Protection Plan,ExpressRoute
+1,Cloud Service Profile / Service Hardening,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+1.1,"Provide a list of connections in the ""List of Connections"" tab in this checklist:
+- interactive user (including user, admininistrator, operations, support etc) and non-interactive access (system/application) supported and enabled for access to the cloud service including SSH/command line, web user interface management console, access key/secret etc.   
+- Connections to other public cloud services 
+- Connections from the public cloud services to any external system
+",,,,"With the right Azure RBAC permissions (Entra ID–authenticated), the services can be accessed from:
+- Azure Portal (interactive)
+- Azure CLI, Terraform via CI/CD pipelines (non-interactive (currently restricted to approved on-premise servers via ExpressRoute. ",Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y
+1.2,Baseline configuration standards should be established for the cloud service.,,,,Based on CIS Microsoft Azure Foundations Benchmark Level 1. Baselines are enforced and monitored through Azure Policy initiatives (CIS and Microsoft Cloud Security Benchmark) and assessed in Defender for Cloud's e dashboard. ,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y
+1.3,Describe the control in place for segregation of production and test environments.,,,,"Subscription-level, network-level and IAM-level segregation. Production and non-production run in separate subscriptions under the different landing zone management group, with Azure Policy applied. Network segregation uses separate VNets, NSGs, route tables and Azure Firewall rules",Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y
+1.4,"Where service mode of the cloud service is IaaS or PaaS, Bank-approved anti-virus / anti-malware and host-based intrusion prevention system should be implemented.
+",,,,Only can be applied to Container & Virtual Machine. Containers not used yet.,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,Y,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+1.5,"Cloud service provider should ensure penetration testing had been performed on the cloud service covering best practises including OWASP top vulnerabilities, CWE Top 25 software errors, threats/vulnerabilities specific to microservices/API (where applicable) etc.
+",,,,"Microsoft performs security testing, including penetration testing, as part of its Security Development Lifecycle (SDL). All Microsoft software development teams are required to follow SDL requirements, which incorporate security requirements, threat-informed design, code review, automated security testing and penetration testing. Microsoft performs security testing, including penetration testing, across applicable Microsoft Azure infrastructure, services, and applications. Microsoft's Azure security guidance incorporates recognized industry practices, including OWASP Top 10 and API-specific security risks such as those identified in the OWASP API Security Top 10.The exact testing methodology and scope are service-specific and determined based on the applicable architecture and attack surface.
+
+Azure – Commercial – Penetration Testing Report and Azure + Dynamics 365 + Online Services – Public & Government SOC 2 Type II Report are available. ",Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+2,Authentication,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+2.1,"Does the cloud service supports and enable integration with the Bank's Azure Active Directory (AD) for all interactive user authentication? 
+",,,,"Yes. All Azure services listed are governed by Microsoft Entra ID, which is the Bank's Azure AD tenant. Interactive access via the Azure Portal, CLI l is authenticated against Entra ID and authorised by Azure RBAC. Users are federated to the Bank's AD DS",Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,NA,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y
+2.1.1,"If the cloud service supports integration with Bank's Azure AD for interactive user authentication, state the specific protocol supported for integration e.g. SAML 2.0 etc
+",,,,Entra ID uses OpenID Connect / OAuth 2.0 for Azure Portal and CLI sign-in. SAML 2.0 is supported where federation with the Bank's AD DS is configured.,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,NA,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,"If the cloud service does not support integration with Bank's Azure AD for interactive user authentication OR if it supports Azure AD integration but other additional forms of interactive user authentication mechanism needs to be enabled, please respond to 2.1.2 to 2.1.13:
+",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+2.1.2,"Describe the supported interactive user authentication mechanisms that will be enabled.
+",,,,AD authentication with AD FS.,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,NA,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y
+2.1.3,"The authentication mechanism should enforce minimum 12 alphanumeric characters for user passwords with minimum one alphabet and one numeric/special character.
+",,,,Regular user IDs follow the Bank's Entra ID / AD password policy,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,NA,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y
+2.1.4,"The cloud service should enforce the following baseline check for user passwords:
+
+(a) Password shall not be null.
+
+(b) Passwords which have been used for the last 5 changes (configurable) should not be reused.
+
+(c) Passwords should have a maximum validity period. Upon expiry, application should enforce the change of password.
+",,,,Regular user IDs follow the Bank's Entra ID / AD password policy,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,NA,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y
+2.1.5,"Upon first login using the issued password (e.g. temporary password issued during account creation or password reset), the cloud service should force user to change his/her password to a permanent password.
+",,,,Regular user IDs are not created in Azure. ,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,NA,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y
+2.1.6,"Passwords should be issued to users in a secure manner. 
+
+Issuance of password (in clear text) through email or third party should be avoided.","ITSMCRP v6, Section 5.5.2",,,User passwords are not issued through Azure services.,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,NA,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y
+2.1.7,"The cloud service should support password change function so that users can change their own passwords at any point as long as they have authenticated themselves.
+",,,,Regular users can change their passwords via the Bank's LANID / AD process ,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,NA,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y
+2.1.8,"User passwords should be stored in irreversible cryptographic format using Bank approved algorithm e.g. Salted SHA256 etc.
+",,,,Azure AD stores and manages passwords when federated.,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,NA,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y
+2.1.9,"Stored passwords shall be protected through strong access controls, bearing in mind the principle of ""least-privilege need-to basis"".
+","ITSMCRP v6, Section 5.5.4",,,"Microsoft implements controls for encryption, access, retention and physical security.",Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,NA,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y
+2.1.10,"The cloud service should not return user's passwords in any form (e.g. clear/encrypted/hashed) to any clients for password verification.
+
+",,,,Azure does not return passwords to clients.       ,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,NA,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y
+2.1.11,"User passwords should be protected from disclosure if it needs to be printed. This includes supporting the following controls:
+
+(a) Ensuring clear-text password is not exposed before reaching the printer.
+
+(b) Ink ribbon shall not be used for password printing.
+
+(c) Printed password shall not be visible on surface of password mailer.
+
+(d) Password mailer shall be tampered evident.
+
+(e) Password shall be printed direct without the need for a spoof file.
+",,,,Not applicable. Passwords are not printed. Follow the Bank's Entra ID / AD password policy,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+2.1.12,"User account shall be automatically disabled/locked after 5 (configurable parameter) consecutive unsuccessful authentication attempts.
+","ITSMCRP v6, Section 5.4.6",,,Regular user IDs follow the Bank's Entra ID / AD policy.,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,NA,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y
+2.1.13,"The cloud service must not provide explanation or reason for unsuccessful logon attempts. It should not indicate whether the reason for logon failure is an unrecognised username or wrong password. A configurable (parameterised) message such as 'Invalid UserID/Password' should be displayed.
+","ITSMCRP v6, Section 5.2.16",,,Error messages do not state which factor failed. Using Bank's AD DS,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,NA,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+2.2,"Any default passwords  (e.g. administrator password, connection password, etc) should  be changed before go live.",,,,No default passwords exist for Azure services.     ,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,Y,NA,NA,NA,Y,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+2.3,"Multi-factor authentication should be supported and enabled for any interactive access (including administration, support , operations etc) to the following:
+a) any Internet-facing application/services
+b) any privileged access to public cloud services e.g. top level accounts, root accounts, administrative accounts, sensitive configuration accounts, key management etc.
+c) all administrative accounts in respect of any operating system, database, application, security applicance or network device that is a critical system*
+
+* Critical system as defined baed on MAS 644 notice and Critical Information Infrastructure based on Cybersecurity Act.
+
+","MAS Cloud Advisory 2021 - Item 11
+
+ITSMCRP v6, Section 3.9.20",,,Following Bank's Entra ID / AD  Conditional Access policies for MFA enforcement.,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,NA,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y
+2.4,"The cloud service should support strong authentication mechanism for all incoming connections. List and describe the non-interactive access authentication mechanisms that are supported and will be enabled for access to the cloud service. E.g. API key and access token, access key/secret, session tokens etc
+",,,,Non-interactive access uses Managed Identities (no stored credentials) and Entra ID OAuth 2.0 tokens,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y
+2.5,The cloud service should be able to support and enable credentials used by system/application services for authentication in the public cloud to be changed regularly.,MAS Cloud Advisory 2021 - Item 12,,,"Managed Identity credentials are automatically rotated by Azure and never exposed. For secrets that must exist, Key Vault supports expiry dates and automated rotation.",Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y
+2.6,"For access credentials that need to be stored, state where they will be stored and how (i.e. encryption algorithm, key length, key protection) they will be protected in storage.",,,,"Application secrets, keys and certificates are stored in Azure Key Vault with encryption at rest,",Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y
+2.7,"Confirm that all hard-coded or default credentials (e.g. passwords, tokens etc) are changed before service goes live.",,,,No hard-coded credentials are used. Secrets are retrieved from Key Vault or replaced by Managed Identity.,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y
+2.8,"Any default accounts that are not required to support business/operational requirements, should be deleted or disabled (if cannot be deleted).",,,,Managed through the application decommissioning process. Follow the Bank's Entra ID / AD  policy.,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,Y,NA,NA,NA,Y,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+3,Access Control / Access Management ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+3.1,"If multiple public cloud services are used, the cloud service provide should support a mechanism for centrally managing the security policies over the use of the different cloud services to ensure the policies are consistently enforced.
+",MAS Cloud Advisory 2021 - Item 14,,,CIS L1 guardrails are enforced through Azure Policy  assigned at the subscriptions level. Defender for Cloud provides central posture and compliance reporting.    ,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y
+3.2,"The cloud service should facilitate proper segregation of duties by allowing the following administrative functions to be granularly assigned to different groups of employees on least-privileged basis:
+
+(a) User account management (e.g., user ID maintenance, password management, user-to-role assignment, user access related parameter maintenance, etc)
+
+(b) Profile/role management (e.g., role to resource management, role to function management etc)
+
+(c) Data access management (e.g. role or user to data access etc)
+
+(d) Application’s Product / Business / Operational parameters management (e.g. service configuration, product templates, transaction codes, team definition, portfolio/book definition etc)",MAS Cloud Advisory 2021 - Item 10,,,"Azure RBAC provides granular built-in and custom roles scoped to management group, subscription, resource group or resource. Privileged roles are assigned just-in-time through Entra PIM.",Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y
+3.3,"Maker-checker control should be supported and enabled for the following user account/role administration functions for the cloud service:
+
+(a) Changes to User Account Parameters (NA if all user authentication is via integration with Azure AD)
+
+(b) Changes to User Password Policy (NA if all user authentication is via integration with Azure AD)
+
+(c) User account creation / deletion
+
+(d) User password creation / reset
+
+(e) User Group/Role changes
+
+(f) Group/Role to cloud services / function access control
+
+(g) Changes to any access control configuration 
+
+(h) Changes performed using root / privileged account.
+
+Additionally, the cloud service should also enforce maker is not the checker for the same request.
+","ITSMCRP v6, Section 2.3.6",,,Access is governed through Entra ID. OneIdentity onboarding and maker-checker approval workflows. PIM activation requires approval for privileged roles.,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y
+3.4,Maker-checker control should be supported and enabled for sensitive functions performed on the cloud service.,"ITSMCRP v6, Section 2.3.6",,,"Enforced through Infrastructure-as-Code pull-request review and approval gates in CI/CD pipelines, plus RBAC governance",Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y
+3.5,"User session should be automatically terminated after a configurable period of inactivity (session idle time-out of 15 min).
+","ITSMCRP v6, Section 5.2.13",,,Following Bank's Entra ID / AD  policies for session duration.,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,NA,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y
+3.6,"Concurrent logons using same user account from different workstations should not be allowed.
+","ITSMCRP v6, Section 5.2.11",,,Not allowed.,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,NA,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N
+3.7,User accounts that are inactive for more than 30 days should be automatically revoked or disabled.,"ITSMCRP v6, Section 5.4.12",,,Managed through Active Directory and Azure AD,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,NA,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y
+3.8,"The cloud service should support and ensure all access (via interactive user access like UI or command line, API, etc) to data/resource/service had been explicitly granted based on the principle of need-to, least-privilege and per-request. (i.e. enforce no access by default)   
+","MAS Cloud Advisory 2021 - Item 10, 15
+
+ITSMCRP v, Section 3.9.19",,,Azure RBAC denies by default (no role assignment means no access).,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y
+3.9,"Network access control (e.g. IP Whitelisting etc) should be enabled for access to any services (including administrative interfaces / console etc) where there are no requirement to be accessible via Internet.
+",,,,Conditional Access named locations restrict portal and CLI sign-in to approved Bank's IP ranges and policies.,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y
+3.10,"For running of containerised application on IaaS:
+ ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+3.10.1,"The application should be designed to ensure running containers with similar risk profile together (i.e. based on the criticality of the service or the data that are processed) to minimise risk exposure.
+",MAS Cloud Advisory 2021 - Item 19,,,"Not applicable currently as containers (AKS / Container Apps) are not used. If introduced, workloads will be grouped by risk using separate node pools, namespaces and subscriptions.      ",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+3.10.2,"Container-specific security solution for preventing, detecting and responding to container-specific threats should be adopted.
+",MAS Cloud Advisory 2021 - Item 19,,,"Not applicable currently. If introduced, Defender for Containers will be used. ",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+3.10.3,"Stringent control should be adopted for granting of access to container orchestrators, especially the use of the orchestrator administrative account, and the orchestrator's access to container images.",MAS Cloud Advisory 2021 - Item 20,,,"Not applicable currently. If introduced, AKS access will use Entra ID integration, Azure RBAC and private clusters. ",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+3.11,"For running of microservice architecture / application on IaaS:
+ ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+3.11.1,"Robust authentication and service mesh should be supported for fine grained access control to APIs. 
+",MAS Cloud Advisory 2021 - Item 17,,,"Not applicable currently. If introduced, to  use  Managed Identities with Azure RBAC for fine grain access",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,Y,Y,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+4,Data Security ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+4.1,"Only cryptographic algorithms / standards which are of established international standards such as National Institute of Standards and Technology (NIST) and subjected to rigorous scrutiny by an international communicty of cryptographers, or approved by authoritative professional bodies or government agencies, should be used for the protection of sensitive information and credentials.
+
+Such algorithms include RSA-2048bit, AES-128bit and above, SHA256 and above, etc.
+","MASTRM v6, Section 5.7.2",,,"Azure services support AES-256 and RSA-2048 or higher, with SHA-256 or stronger",Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y
+4.2,"Sensitive access credentials (including passwords, biometric, signature, access/JWT tokens, pin, certificates / certificate passphrases and cryptographic keys except public keys etc) should be encrypted with Bank approved cryptographic algorithm (as per 4.1) during transmission and at rest. 
+","MASTRM v6, Section 5.5.3",,,Azure service endpoints enforce TLS 1.2 or higher . Secrets in Key Vault and data in Storage are encrypted at rest,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y
+4.3,"Confidential or sensitive data (e.g. personally Identifiable Information, customer data, transaction data etc)  should be encrypted, with Bank approved cryptographic algorithm (as per 4.1) during transmission and at rest.
+","MASTRM v6, Section 7.10.4",,,"Platform encryption at rest is enabled by default, and TLS is enforced in transit.",Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y
+4.4,Cryptographic key should not be hardcoded wtihin the cloud service.,,,,Azure does not hardcode keys within its services. Customer keys are generated and held in Key Vault. ,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y
+4.5,The cloud service should support Bring-Your-Own-Key (BYOK) for cryptographic keys used for the protection of sensitive data at rest.,MAS Cloud Advisory 2021 - Item 22,,,"Supported. Key Vault allows importing HSM-protected keys through the BYOK process, with keys generated in a supported on-premise HSM. Or via Cloud HSM",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,Y,NA,Y,Y,Y,Y,NA,NA,Y,NA,NA,Y,NA,NA,Y,Y,Y,NA,NA,Y,NA,NA,NA,NA
+4.6,"Cryptographic keys used for the protection of sensitive data should be stored in FIPS140-2 Level 3 certified Hardware Security Module in the cloud.
+",MAS Cloud Advisory 2021 - Item 23,,,Key Vault Premium and Managed HSM use FIPS 140-3 Level 3 validated HSMs. ,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,Y,Y,Y,Y,Y,Y,NA,NA,Y,NA,NA,Y,NA,NA,Y,NA,Y,NA,NA,Y,NA,NA,NA,NA
+4.7,The cloud service should support Bring-Your-Own-Encryption (BYOE) for protection of sensitive data.,MAS Cloud Advisory 2021 - Item 22,,,Supported through Key Vault / Managed HSM using customer-managed keys.  Services that support BYOK listed as YES. Otherwise listed as NA.,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,Y,Y,Y,NA,Y,Y,NA,NA,NA,NA,NA,NA,NA,NA,Y,NA,NA,NA,NA,NA,NA,NA,NA,NA
+4.8,"The cloud service should support a secure mechanism for cryptographic keys, used in the application, to be changed or rotated securely.
+",,,,Key Vault supports automatic key rotation policies with versioning.,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,Y,Y,NA,NA,NA,NA,NA,Y,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+4.9,"The cloud service should support a secure mechanism for cryptographic keys to be destroyed when it is no longer in use.
+","ITSMCRP v6, Section 5.7.17",,,Key Vault soft-delete and purge protection manage the key lifecycle. Purge protection prevents permanent deletion during the retention period,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,Y,Y,NA,NA,NA,NA,NA,Y,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+4.10,"The cloud service should support and ensure that cryptographic keys are for single purposes to reduce the impact of key exposure. For example, the cryptographic key for data encryption should be different from the one that is used to generate cryptographic digital signatures.
+","ITSMCRP v6, Section 5.7.13",,,Supported through key operations attributes and separate keys per purpose,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,Y,Y,NA,NA,NA,NA,NA,Y,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+4.11,"If a key is compromised, the cloud service should allow immediate revocation, destruction and replacement of key or all keys encrypted under or derived from the exposed key.
+",,,,"Supported. Administrators can disable, revoke, delete or roll keys in Key Vault",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,Y,Y,Y,Y,N,N,NA,NA,N,NA,NA,N,NA,NA,N,N,N,NA,NA,N,NA,NA,NA,NA
+4.12,"When the cloud service leverages on multi-tenanted architecture like sharing of computes/storage/network resources with other entities, please provide details of logical and physical controls to protect bank's data comingling in storage and in processing.
+",,,,"Logical controls (storage + processing isolation): Azure FedRAMP states tenant separation is enforced through VLAN segmentation, ACL-based deny-by-default flow control, host/VM firewalls, and VFP filtering between tenant assets; and VM processing isolation is enforced by hypervisor separation of Host/Guest OS and Guest-to-Guest boundaries. For storage, Azure documents encryption at rest (AES-256, FIPS 140-2), TLS in transit, AD security-group least-privilege access, and ACLs preventing storage hosts from external exposure. Azure SOC corroborates this with tested controls for tenant segregation and storage confidentiality (LA-3, LA-4), with no exceptions noted in the sampled tests.
+Physical controls (protecting underlying shared infrastructure): Azure FedRAMP documents PE controls including 24x7 guarded single-entry datacenters, MFA physical access (badge + biometrics/mantraps), continuous CCTV/alarm monitoring, access logging/review, and restricted server/caged areas with least privilege. Azure SOC Section 4 Physical & Environmental Security similarly reports PE control testing over access restrictions, surveillance, and quarterly access reviews; one period showed two datacenter physical-access mechanism exceptions, with follow-up sampling noting no additional exceptions.
+
+Azure + Dynamics 365 + Online Services – Public & Government SOC 2 Type II Report
+Azure - Dynamics 365 - Online Services - ISO 27001 and ISO 27701 Certificate",Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y
+4.13,"Where there is a requirement for users to upload files via the application, anti-virus scanning should be performed on uploaded files prior to processing or storage. ",,,,Defender for Storage malware scanning can be enabled for Storage Accounts,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,Y,Y,Y,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+5,Audit Trail,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+5.1,"The cloud service should ensure passwords, sensitive credentials or cryptographic key values are not logged in audit trail.
+","ITSMCRP v6, Section 5.8.2",,,"Azure  audit logs do not record credentials or key values. Key Vault logs record operations, not secret values.   ",Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y
+5.2,"The cloud service should support and maintain audit log of all accesses (including interactive or non-interactive), user and administration activities .
+
+Such audit trails/logs shall include sufficient information to establish what events have occurred and who or what has caused them.
+","ITSMCRP v6, Section 5.8.1",,,"The Activity Log is automatically collected, and diagnostic settings send it and resource logs to a Log Analytics workspace",Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y
+5.3,"The cloud service should record both success and failed of the following events:
+
+(a) Authentication attempts
+(b) Attempts of password change (NA if all user authentication is via integration with Azure AD)
+(c) Authorization events
+(d) Privileged security administration including any use of root / privileged accounts
+(e) API access to the services    
+(f)  Sensitive data export
+","ITSMCRP v6, Section 5.8.1",,,"Entra sign-in logs, Activity Log and resource logs cover authentication, authorization, privileged operations and API access. Sensitive data exports are not applicable as no PII is stored in the cloud",Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y
+5.4,"For each recorded event, the audit record should include the information below:
+
+(a) Date and time of event
+(b) User ID (and/or application ID) associated with the event [ID must be unique]
+(c) Where applicable, Maker ID/Date/Time and Checker ID/Date/Time associated with the event. [ID must be unique]
+(d) Description or type of event performed or resource/services accessed
+(e) Before and/or after change value
+(f) Status of the event
+(g) Where applicable, program or command used to initiate the event
+(h) For sensitive data export/print event, the size of downloaded data.
+
+","ITSMCRP v6, Section 5.8.1",,,"(a) Date and time of event: YES
+(b) (b) User ID (and/or application ID) associated with the event [ID must be unique]: YES
+(c) Where applicable, Maker ID/Date/Time and Checker ID/Date/Time associated with the event. [ID must be unique] : NA
+(d) Description or type of event performed or resource/services accessed : YES
+(e) Before and/or after change value : YES, through change history
+(f) Status of the event : YES
+(g) Where applicable, program or command used to initiate the event: Partially. Operation/Action . 
+(h) For sensitive data export/print event, the size of downloaded data: NA",Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y
+5.5,"The cloud service should support audit trail on all administration activities (e.g., user account administration, role/profile administration, security parameters administration, changes to access control, rules or policy etc).
+
+The audit record should include the information below but not restricted to:
+
+(a) Date and time of event
+(b) Administrator ID (and/or application ID) associated with the event [ID must be unique]
+(c) Where applicable, Maker ID/Date/Time and Checker ID/Date/Time associated with the event [ID must be unique]
+(d) Where applicable, the managed user account ID [ID must be unique] or resource/service
+(e) Where applicable, the managed user group or role 
+(f) Where applicable, the managed resource, parameter or function
+(g) Description or type of event performed
+(h) Before and after change value
+(i) Status of the event
+(j) Where applicable, program or command used to initiate the event
+","ITSMCRP v6, Section 5.8.1",,,"(a) Date and time of event: YES
+(b) Administrator ID (and/or application ID) associated with the event [ID must be unique]: YES
+(c) Where applicable, Maker ID/Date/Time and Checker ID/Date/Time associated with the event [ID must be unique]: NA
+(d) Where applicable, the managed user account ID [ID must be unique] or resource/service: YES
+(e) Where applicable, the managed user group or role: YES 
+(f) Where applicable, the managed resource, parameter or function: YES
+(g) Description or type of event performed: YES
+(h) Before and after change value: NA
+(i) Status of the event: YES, through change history
+(j) Where applicable, program or command used to initiate the event: Partially. Operation/Action.  ",Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y
+5.6,"Audit trails should be protected from unauthorised access and manipulation (such as alteration, addition, deletion, etc).
+
+","ITSMCRP v6, Section 5.8.6",,,Logs are held in a dedicated central Log Analytics workspace or subscription with restricted RBAC.,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y
+5.7,The cloud service should support and enable audit logs to be transferred to the Bank's SIEM for monitoring.,"MAS Cloud Advisory 2021 - Item 27
+
+ITSMCRP v6, Section 3.9.17",,,Logs go to Microsoft Sentinel SIEM. Pending Splunk implementation.,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y
+5.8,The cloud service should support monitoring and alerting capabilities to detect suspicious activities.,"ITSMCRP v6, Section 3.9.18",,,Implemented through Defender for Cloud and Microsoft Sentinel,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+6,Network Security,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+6.1,"Where the solution requires access and/or communication to/from the public Internet:-
+
+a) A multi-tier network architecture (comprising of untrusted network, DMZ, trusted network zone for Internet-based application and  internal systems) shall be implemented.
+
+b) Direct connections between untrusted network and trusted network shall not be allowed. External users (in untrusted network) should only have access to the external-facing service in DMZ network. 
+
+(iii) Business logic and non-public data should not reside in the DMZ segment
+
+","ITSMCRP v6, Section 3.9.16a",,,"Azure environment supports multi-tier architecture (VNet subnets, NSGs, Azure Firewall, Front Door + WAF). No public-facing web servers currently exist, so no DMZ is required now. If Internet-facing workloads are deployed, a DMZ architecture will be implemented.",Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,Y,Y,NA
+6.2,"Where the solution requires access and/or communication from/to external party via private leased line (semi-trusted network):-
+
+(i) A multi-tier network architecture (comprising of semi-trusted network, DMZ and bank trusted network) shall be implemented. The DMZ shall act as a staging area between external systems and the systems within trusted network. 
+
+(ii) Direct connections from semi-trusted network (to the trusted network) shall not be allowed.
+
+(iii) DMZ-based devices should be vigilantly maintained (i.e., patched)
+","ITSMCRP v6, Section 3.9.16a",,,"No third-party integrations currently exis. When introduced, they will use ExpressRoute or Virtual WAN with a segregated DMZ subnet, firewall inspection and NSGs.     ",Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,NA,NA,Y,NA,NA,Y,NA,NA,NA,NA,NA,Y,NA,NA,NA,NA,NA,NA,Y,Y,Y
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
