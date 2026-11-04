@@ -76,3 +76,4 @@
 | 6.1 | Multi-tier architecture for Internet-facing solutions.        | The Azure environment supports multi-tier architecture (VNet subnets, NSGs, Azure Firewall, Front Door + WAF). No public-facing web servers currently exist, so no DMZ is required now [confirm]. If Internet-facing workloads are deployed, a DMZ architecture will be implemented. |
 | 6.2 | Multi-tier architecture for private leased-line integrations. | No third-party integrations currently exist [confirm]. When introduced, they will use ExpressRoute or Virtual WAN with a segregated DMZ subnet, firewall inspection and NSGs.                                                                                                        |
 
+5.7 The cloud service should support and enable audit logs to be transferred to the Bank's SIEM for monitoring.
