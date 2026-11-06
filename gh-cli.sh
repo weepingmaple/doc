@@ -1,30 +1,3 @@
-(
-  set -e
-
-  case "$(uname -m)" in
-    x86_64) ARCH=amd64 ;;
-    aarch64) ARCH=arm64 ;;
-    *) echo "Unsupported architecture: $(uname -m)"; exit 1 ;;
-  esac
-
-  RELEASE_URL=$(curl -fsSL -o /dev/null -w '%{url_effective}' \
-    https://github.com/cli/cli/releases/latest)
-
-  VERSION="${RELEASE_URL##*/}"
-  VERSION="${VERSION#v}"
-
-  WORKDIR=$(mktemp -d)
-  trap 'rm -rf "$WORKDIR"' EXIT
-
-  curl -fL \
-    "https://github.com/cli/cli/releases/download/v${VERSION}/gh_${VERSION}_linux_${ARCH}.tar.gz" \
-    -o "$WORKDIR/gh.tar.gz"
-
-  tar -xzf "$WORKDIR/gh.tar.gz" -C "$WORKDIR"
-
-  sudo install -m 0755 \
-    "$WORKDIR/gh_${VERSION}_linux_${ARCH}/bin/gh" \
-    /usr/local/bin/gh
-
-  /usr/local/bin/gh --version
-)
+https://claude.com/cai/oauth/authorize?code=true&client_id=9d1c250a-e61b-44d9-88ed-5944d1962f5e&response_type=code&redirect_uri=https%3A%2F%2Fplatform.claude.com%2
+Foauth%2Fcode%2Fcallback&scope=org%3Acreate_api_key+user%3Aprofile+user%3Ainference+user%3Asessions%3Aclaude_code+user%3Amcp_servers+user%3Afile_upload+user%3Aplug
+ins&code_challenge=bPvKUjyAlV0XETRDSHicTbWfZNu102vi8c-o2qyesmc&code_challenge_method=S256&state=FWWCNIa4pt4ax3N_taJnPPDHnLqbPUXEU-NcheERPJk
